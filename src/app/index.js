@@ -133,8 +133,17 @@ function createApp() {
 
   app.post('/api/create-config', apiLimiter, (req, res) => {
     const raw = req.body && req.body.token;
+const rawTokens = req.body && req.body.tokens;
+
+const tokens = Array.isArray(rawTokens)
+  ? rawTokens.map((t) => normalizeToken(t)).filter(Boolean)
+  : [];
+
+if (raw && !tokens.includes(normalizeToken(raw))) {
+  tokens.unshift(normalizeToken(raw));
+}
     const token = normalizeToken(raw || '');
-    if (!isPlausibleToken(token)) {
+    if (!tokens.length || tokens.some((t) => !isPlausibleToken(t))) {
       return res.status(400).json({ error: 'Invalid FebBox token format.' });
     }
     const requestedMode = req.body && req.body.playbackMode;
@@ -142,7 +151,14 @@ function createApp() {
     const requestedDisplayMode = req.body && req.body.displayMode;
     const displayMode = DISPLAY_MODE_VALUES.has(requestedDisplayMode) ? requestedDisplayMode : DEFAULT_DISPLAY_MODE;
     try {
-      const configToken = encodeConfigToken({ febboxToken: token, quality: req.body.quality || {}, playbackMode, displayMode });
+      const token = tokens[0];
+const configToken = encodeConfigToken({
+  febboxToken: token,
+  febboxTokens: tokens,
+  quality: req.body.quality || {},
+  playbackMode,
+  displayMode
+});
       res.json({ configToken, playbackMode, displayMode });
     } catch (err) {
       const safe = redactError(err);
