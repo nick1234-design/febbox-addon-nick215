@@ -160,7 +160,9 @@ const [showToken, setShowToken] = useState(false);
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
   token: t,
-  tokens: [t, token2.trim()].filter(Boolean)
+  tokens: [t, token2.trim()].filter(Boolean),
+  playbackMode,
+  displayMode
 })
       });
       const data = await resp.json();
@@ -191,10 +193,8 @@ const [showToken, setShowToken] = useState(false);
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
   token: t,
-  tokens: [t, token2.trim()].filter(Boolean),
-  playbackMode,
-  displayMode
-}),
+  tokens: [t, token2.trim()].filter(Boolean)
+})
       });
       const data = await resp.json();
       if (data.configToken) {
