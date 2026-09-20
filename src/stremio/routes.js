@@ -136,8 +136,25 @@ async function streamHandler(req, res) {
     return res.json({ streams: [] });
   }
 
-  const febboxToken = config.febboxToken;
-  const tokenHash = hashToken(febboxToken);
+  const febboxTokens = Array.isArray(config.febboxTokens) && config.febboxTokens.length
+  ? config.febboxTokens
+  : [config.febboxToken];
+
+const quotaResults = await Promise.all(
+  febboxTokens.map(async (token) => {
+    try {
+      const quota = await getQuota({ token });
+      return { token, remainingMB: quota.remainingMB };
+    } catch (err) {
+      return { token, remainingMB: -1 };
+    }
+  })
+);
+
+quotaResults.sort((a, b) => b.remainingMB - a.remainingMB);
+
+const febboxToken = quotaResults[0].token;
+const tokenHash = hashToken(febboxToken);
   const playbackMode = resolver.PLAYBACK_MODE_VALUES.has(config.playbackMode)
     ? config.playbackMode
     : resolver.DEFAULT_PLAYBACK_MODE;
