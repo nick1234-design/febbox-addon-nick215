@@ -255,19 +255,58 @@ const tokenHash = hashToken(febboxToken);
 
 /** POST /api/validate-token — replaces the dead febbox.andresdev.org check. */
 async function validateTokenHandler(req, res) {
-  const { token } = req.body || {};
-  if (!token || typeof token !== 'string' || !token.trim()) {
+  const { token, tokens } = req.body || {};
+
+  const febboxTokens = Array.isArray(tokens)
+    ? tokens.map((t) => String(t || '').trim()).filter(Boolean)
+    : [];
+
+  if (token && typeof token === 'string' && token.trim() && !febboxTokens.includes(token.trim())) {
+    febboxTokens.unshift(token.trim());
+  }
+
+  if (!febboxTokens.length) {
     return res.status(400).json({ isValid: false, message: 'FebBox token is required.' });
   }
+
   try {
-    const quota = await getQuota({ token: token.trim() });
-    return res.json({ isValid: true, quota });
+    const results = await Promise.all(
+      febboxTokens.map(async (febboxToken) => {
+        try {
+          const quota = await getQuota({ token: febboxToken });
+          return { isValid: true, quota };
+        } catch (err) {
+          if (err instanceof FebBoxError && err.code === 'AUTH_INVALID') {
+            return { isValid: false, message: 'FebBox rejected this token.' };
+          }
+
+          const safe = redactError(err);
+          return { isValid: false, message: `Could not validate token: ${safe.message}` };
+        }
+      })
+    );
+
+    const invalid = results.find((result) => !result.isValid);
+
+    if (invalid) {
+      return res.json({
+        isValid: false,
+        message: invalid.message,
+        results,
+      });
+    }
+
+    return res.json({
+      isValid: true,
+      quotas: results.map((result) => result.quota),
+      results,
+    });
   } catch (err) {
     const safe = redactError(err);
-    if (err instanceof FebBoxError && err.code === 'AUTH_INVALID') {
-      return res.json({ isValid: false, message: 'FebBox rejected this token.' });
-    }
-    return res.status(502).json({ isValid: false, message: `Could not validate token: ${safe.message}` });
+    return res.status(502).json({
+      isValid: false,
+      message: `Could not validate tokens: ${safe.message}`,
+    });
   }
 }
 
