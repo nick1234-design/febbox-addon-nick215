@@ -137,7 +137,8 @@ function Step({ last, title, sub, children }) {
 
 export default function App() {
   const [token, setToken] = useState('');
-  const [showToken, setShowToken] = useState(false);
+const [token2, setToken2] = useState('');
+const [showToken, setShowToken] = useState(false);
   const [playbackMode, setPlaybackMode] = useState('direct');
   const [displayMode, setDisplayMode] = useState('standard');
   const [advancedOpen, setAdvancedOpen] = useState(false);
