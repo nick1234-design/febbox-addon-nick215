@@ -206,7 +206,7 @@ const [showToken, setShowToken] = useState(false);
     } finally {
       setInstalling(false);
     }
-  }, [token, playbackMode, displayMode]);
+  }, [token, token2, playbackMode, displayMode]);
 
   const copy = useCallback(async () => {
     if (!result) return;
