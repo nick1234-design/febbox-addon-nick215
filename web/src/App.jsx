@@ -158,7 +158,10 @@ const [showToken, setShowToken] = useState(false);
       const resp = await fetch('/api/validate-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: t }),
+        body: JSON.stringify({
+  token: t,
+  tokens: [t, token2.trim()].filter(Boolean)
+})
       });
       const data = await resp.json();
       if (data.isValid) {
