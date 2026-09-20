@@ -185,7 +185,12 @@ export default function App() {
       const resp = await fetch('/api/create-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: t, playbackMode, displayMode }),
+        body: JSON.stringify({
+  token: t,
+  tokens: [t, token2.trim()].filter(Boolean),
+  playbackMode,
+  displayMode
+}),
       });
       const data = await resp.json();
       if (data.configToken) {
@@ -261,6 +266,15 @@ export default function App() {
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
               />
+<input
+  id="token2"
+  aria-label="FebBox Token 2"
+  type={showToken ? 'text' : 'password'}
+  placeholder="Paste your second FebBox token (optional)"
+  autoComplete="off"
+  value={token2}
+  onChange={(e) => setToken2(e.target.value)}
+/>
               <button type="button" className="toggle-visibility" onClick={() => setShowToken((v) => !v)}>
                 {showToken ? <Icon.EyeOff /> : <Icon.Eye />}
               </button>
